@@ -1,0 +1,51 @@
+html, body, #root { background: transparent; overflow: hidden; }
+
+/* A janela é transparente: o espaço extra em volta abriga a sombra e a "setinha"
+   que aponta para a bolinha (lado esquerdo ou direito, conforme a configuração). */
+.shell { height: 100%; padding: 16px 16px 16px 28px; }
+body[data-edge='right'] .shell { padding: 16px 28px 16px 16px; }
+
+.panel {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* Setinha: quadrado girado 45° com duas bordas. Alinhada ao centro da bolinha
+   (64 px acima da base do painel). */
+.panel::before {
+  content: '';
+  position: absolute;
+  bottom: 57px;
+  width: 14px;
+  height: 14px;
+  background: var(--panel);
+}
+body[data-edge='left'] .panel::before {
+  left: -8px;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+body[data-edge='right'] .panel::before {
+  right: -8px;
+  border-right: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  transform: rotate(45deg);
+}
+
+.panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 0 8px 4px;
+}
+.panel__title { margin: 0; font-size: 15px; font-weight: 600; }
+.panel__status { margin: 0; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); }
+.panel__actions { display: flex; gap: 2px; }

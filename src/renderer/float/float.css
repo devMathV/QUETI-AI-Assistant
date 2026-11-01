@@ -1,0 +1,52 @@
+:root {
+  --size: 56px;   /* diâmetro da bolinha */
+  --peek: 22px;   /* quanto dela aparece quando está "escondida" na borda */
+  --idle: #8f8f8f;
+  --active: #4a4a4a;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+}
+
+.bubble {
+  position: absolute;
+  top: 4px;
+  width: var(--size);
+  height: var(--size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--idle);
+  color: #fff;
+  cursor: pointer;
+  touch-action: none;
+  /* A única animação do botão: ocorre só quando você interage. */
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+/* Escondida: apenas --peek pixels ficam visíveis na borda. */
+body[data-edge='left'] .bubble { left: 4px; transform: translateX(calc(-1 * (var(--size) - var(--peek) + 4px))); }
+body[data-edge='right'] .bubble { right: 4px; transform: translateX(calc(var(--size) - var(--peek) + 4px)); }
+
+/* Revelada: ao passar o mouse, com o chat aberto, durante o arraste ou com foco do teclado. */
+body[data-edge] .bubble:hover,
+body[data-edge] .bubble:focus-visible,
+body[data-edge].open .bubble,
+body[data-edge].dragging .bubble {
+  transform: none;
+  background: var(--active);
+}
+
+.bubble:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble { transition: none; }
+}
