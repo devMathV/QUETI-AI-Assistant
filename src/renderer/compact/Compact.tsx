@@ -16,7 +16,7 @@ export default function Compact() {
     }
     void window.api.settings.get().then((s) => applyEdge(s.widgetEdge))
     const offSettings = window.api.settings.onChanged((s) => applyEdge(s.widgetEdge))
-    // Sempre que a janela é exibida, devolve o foco ao campo de texto.
+
     const offVisible = window.api.windows.onCompactVisible((v) => v && setFocusToken((t) => t + 1))
 
     const onKey = (e: KeyboardEvent) => {
@@ -46,10 +46,10 @@ export default function Compact() {
 
   return (
     <div className="shell">
-      <section className="panel" aria-label="Chat rápido do assistente">
+      <section className="panel" aria-label="Chat rápido do QUETI">
         <header className="panel__header">
           <div>
-            <h1 className="panel__title">Assistente</h1>
+            <h1 className="panel__title">QUETI</h1>
             <p className="panel__status" title={statusText}>
               {statusText}
             </p>

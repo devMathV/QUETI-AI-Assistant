@@ -1,11 +1,12 @@
-# Assistente Pessoal (Windows 11)
+# QUETI: Quick Utility for Everyday Tasks and Information
 
 Assistente pessoal de IA para desktop, **gratuito nas funcionalidades essenciais**, feito para rodar bem em computadores modestos (8 GB de RAM, sem GPU dedicada).
 
-> **Estado atual: Etapa 4 (voz).** O assistente conversa por texto e voz com uma IA pela **Groq** (plano gratuito, com chave de API sua), salva o histórico e a memória **só neste computador** e permite ver, editar, exportar e apagar tudo. Sem chave ou sem armazenamento, o aplicativo abre normalmente e explica o que falta.
+> **Estado atual: Etapa 6 (permissões e ferramentas).** O QUETI conversa por texto e voz com uma IA pela **Groq** (plano gratuito, com chave de API sua), pesquisa na web, lê arquivos e alterações do Git que você anexa e, se você ligar as ferramentas, abre sites e aplicativos autorizados e cria, altera ou apaga arquivos com a sua confirmação. Histórico e memória ficam **só neste computador**. Sem chave ou sem armazenamento, o aplicativo abre normalmente e explica o que falta.
 
 ## O que já funciona
 
+- **Ferramentas e permissões** (opcionais, desligadas por padrão): abrir sites e aplicativos autorizados, ler páginas e pastas autorizadas e criar, alterar ou apagar arquivos com confirmação. Veja [`docs/permissoes.md`](docs/permissoes.md).
 - **Pesquisa na web** (Tavily, com fontes e links), **anexar arquivos** e **alterações do Git** (somente leitura), sempre por ação sua. Veja [`docs/pesquisa-e-arquivos.md`](docs/pesquisa-e-arquivos.md).
 - **Voz**: fale clicando no microfone (liga só durante o clique, com indicador e limite de 2 minutos) e ouça as respostas com as vozes do Windows. O áudio só é enviado à Groq para transcrição depois da sua permissão. Há um **modo conversa** (o assistente ouve, espera sua pausa, responde falando e volta a ouvir, só quando você inicia a sessão) e ajustes para melhorar a precisão (modelo, vocabulário, teste de microfone e comparação de modelos). Veja [`docs/voz.md`](docs/voz.md).
 
@@ -18,6 +19,7 @@ Assistente pessoal de IA para desktop, **gratuito nas funcionalidades essenciais
 - **Erros explicados**: sem chave, chave recusada, limite de uso atingido, sem internet, tempo esgotado e instabilidade do provedor.
 
 - **Botão flutuante** discreto, meio escondido na borda da tela (esquerda ou direita). Passe o mouse ou clique para revelar; arraste na vertical para mudar a altura.
+- Fechar uma janela **não** encerra o QUETI. Para sair de verdade, use *Sair* na bandeja ou *Encerrar o QUETI* no aplicativo.
 - **Chat rápido**: abre ao lado do botão, por clique ou pelo atalho global `Ctrl + Shift + Espaço`. Fecha com `Esc` ou clicando fora; o alfinete mantém a janela aberta.
 - **Aplicativo central**: janela normal (com ícone na barra de tarefas) com a mesma conversa sincronizada, configurações e diagnóstico de consumo.
 - **Ícone na bandeja** do Windows: abrir aplicativo, chat rápido, mostrar/ocultar o botão, configurações e **Sair**.
@@ -25,7 +27,7 @@ Assistente pessoal de IA para desktop, **gratuito nas funcionalidades essenciais
 
 ## O que ainda NÃO existe
 
-PDF/Word/Excel, GitHub e permissões por recurso e ferramentas do sistema. Veja o roadmap no repositório.
+Leitura de PDF, Word e Excel, execução de comandos no terminal, operações de escrita no Git, integração com o GitHub, captura de tela, instalador para Windows e a troca do atalho global pela interface. Veja o roadmap no repositório.
 
 ## Configurar a IA (gratuito)
 
@@ -49,6 +51,7 @@ npm run dev          # inicia com recarregamento automático
 npm run typecheck    # verifica os tipos (TypeScript)
 npm run build        # gera os arquivos em out/
 npm run preview      # executa a versão compilada
+npm test             # executa os testes unitários de lógica e segurança
 ```
 
 ## Estrutura
@@ -63,7 +66,7 @@ docs/         Medições de desempenho e notas
 
 ## Segurança (resumo)
 
-Janelas com `contextIsolation`, `sandbox` e sem `nodeIntegration`; IPC com canais específicos e validação de origem e dados; permissões de sistema (microfone etc.) negadas por padrão; navegação e janelas novas bloqueadas; CSP estrita no build de produção.
+Janelas com `contextIsolation`, `sandbox` e sem `nodeIntegration`; IPC com canais específicos e validação de origem e dados; permissões de sistema negadas por padrão (o microfone só é liberado com a sua autorização); ferramentas desligadas por padrão, com permissões por recurso e confirmação para criar, alterar ou apagar arquivos; navegação e janelas novas bloqueadas; CSP estrita no build de produção.
 
 ## Dados armazenados
 

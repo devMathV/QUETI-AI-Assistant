@@ -5,8 +5,14 @@ export function useAttachments(): AttachmentInfo[] {
   const [list, setList] = useState<AttachmentInfo[]>([])
   useEffect(() => {
     let active = true
-    const off = window.api.attachments.onChanged((l) => active && setList(l))
-    void window.api.attachments.list().then((l) => active && setList(l))
+    let receivedUpdate = false
+    const off = window.api.attachments.onChanged((l) => {
+      receivedUpdate = true
+      if (active) setList(l)
+    })
+    void window.api.attachments.list().then((l) => {
+      if (active && !receivedUpdate) setList(l)
+    })
     return () => {
       active = false
       off()

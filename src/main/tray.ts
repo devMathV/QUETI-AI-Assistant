@@ -22,14 +22,13 @@ function buildMenu(): Menu {
 export function createTray(): void {
   const image = nativeImage.createFromPath(icon).resize({ width: 16, height: 16, quality: 'best' })
   tray = new Tray(image)
-  tray.setToolTip('Assistente')
+  tray.setToolTip('QUETI')
   tray.on('click', () => toggleCompact())
   tray.on('double-click', () => openMain('chat'))
   tray.setContextMenu(buildMenu())
   onSettingsApplied(() => refreshTrayMenu())
 }
 
-/** Atualiza os rótulos do menu (ex.: "Mostrar" ↔ "Ocultar"). */
 export function refreshTrayMenu(): void {
   tray?.setContextMenu(buildMenu())
 }

@@ -14,7 +14,7 @@ Tudo é acionado por **você**, de forma explícita. O assistente não pesquisa 
 
 - Botão **+** → "Anexar arquivos…" (caixa nativa do Windows; até 6 arquivos de até 1 MB; texto e código comuns).
 - Só o que você escolher é lido. Os anexos valem para **uma mensagem**: aparecem na mensagem em que foram enviados (e no histórico) e saem da lista depois da resposta. Também saem ao iniciar outra conversa.
-- Texto dentro de arquivos e de resultados da web é tratado como **dado**, não como instrução. Modelos pequenos ainda podem ser enganados por ordens escritas nos arquivos; por isso o assistente ainda não executa ações no computador.
+- Texto dentro de arquivos e de resultados da web é tratado como **dado**, não como instrução: ele é enviado em blocos marcados como conteúdo externo não confiável, com delimitadores neutralizados. Modelos pequenos ainda podem ser enganados por ordens escritas nos arquivos; ações destrutivas continuam exigindo confirmação nativa, mas não há garantia absoluta contra respostas textuais influenciadas pelo conteúdo.
 - Arquivos grandes: a cada pergunta vão à IA só os trechos mais relevantes (cerca de 8.000 caracteres no total).
 - Ainda não suportados: PDF, Word, Excel e imagens.
 

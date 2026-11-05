@@ -1,9 +1,6 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import type { AssistantApi } from '../shared/types'
 
-// O preload é a ÚNICA ponte entre a interface (não confiável) e o processo principal.
-// Expomos funções específicas, nunca o ipcRenderer inteiro.
-
 function subscribe<T>(channel: string, cb: (value: T) => void): () => void {
   const handler = (_event: IpcRendererEvent, value: T): void => cb(value)
   ipcRenderer.on(channel, handler)
@@ -82,12 +79,24 @@ const api: AssistantApi = {
     openInBrowser: (query) => ipcRenderer.send('search:openBrowser', query),
     onConfigChanged: (cb) => subscribe('search:configChanged', cb)
   },
+  permissions: {
+    list: () => ipcRenderer.invoke('permissions:list'),
+    log: () => ipcRenderer.invoke('permissions:log'),
+    addSite: (domain, mode) => ipcRenderer.invoke('permissions:addSite', domain, mode),
+    addApp: () => ipcRenderer.invoke('permissions:addApp'),
+    addFolder: (mode) => ipcRenderer.invoke('permissions:addFolder', mode),
+    revoke: (id) => ipcRenderer.invoke('permissions:revoke', id),
+    clearLog: () => ipcRenderer.send('permissions:clearLog'),
+    onChanged: (cb) => subscribe<void>('permissions:changed', cb)
+    ,browserInfo: () => ipcRenderer.invoke('permissions:browserInfo')
+    ,regenerateBrowserCode: () => ipcRenderer.invoke('permissions:regenerateBrowserCode')
+  },
   attachments: {
     list: () => ipcRenderer.invoke('attachments:list'),
     pickFiles: () => ipcRenderer.invoke('attachments:pickFiles'),
     pickGit: () => ipcRenderer.invoke('attachments:pickGit'),
-    remove: (id) => ipcRenderer.send('attachments:remove', id),
-    clear: () => ipcRenderer.send('attachments:clear'),
+    remove: (id) => ipcRenderer.invoke('attachments:remove', id),
+    clear: () => ipcRenderer.invoke('attachments:clear'),
     onChanged: (cb) => subscribe('attachments:changed', cb)
   },
   clipboard: {

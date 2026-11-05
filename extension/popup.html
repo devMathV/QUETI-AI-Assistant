@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>QUETI</title>
+<link rel="stylesheet" href="popup.css">
+<main class="card">
+  <div class="brand"><span class="brand__mark">Q</span><div><h1>QUETI</h1><p>Ponte do navegador</p></div></div>
+  <p class="intro">Cole o código exibido em <strong>Permissões → Navegador</strong> no QUETI.</p>
+  <label for="code">Código de pareamento</label>
+  <input id="code" autocomplete="off" spellcheck="false" placeholder="QUETI-47831-token">
+  <div class="actions"><button id="save" type="button">Salvar código</button><button id="copy" type="button" class="button--secondary">Copiar</button></div>
+  <p id="status" class="status" role="status">Aguardando código.</p>
+</main>
+<script src="popup.js"></script>

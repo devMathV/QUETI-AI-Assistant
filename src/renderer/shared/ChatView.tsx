@@ -321,6 +321,11 @@ export default function ChatView({ variant, focusToken = 0 }: Props) {
                 Ver memória
               </button>
             )}
+            {m.action === 'open-permissions' && (
+              <button type="button" className="text-btn text-btn--small" onClick={() => window.api.windows.openMain('permissions')}>
+                Abrir permissões
+              </button>
+            )}
             {m.action === 'browser-search' && (
               <button type="button" className="text-btn text-btn--small" onClick={() => window.api.search.openInBrowser(m.actionData ?? '')}>
                 Pesquisar no navegador
@@ -464,10 +469,14 @@ export default function ChatView({ variant, focusToken = 0 }: Props) {
           {attachments.map((a) => (
             <span key={a.id} className="chip-tag" title={`${a.name} (${a.chars.toLocaleString('pt-BR')} caracteres)`}>
               {a.kind === 'git' ? '⎇' : '📎'} {a.name}
-              <button type="button" aria-label={`Remover ${a.name}`} onClick={() => {
-                  window.api.attachments.remove(a.id)
+              <button
+                type="button"
+                aria-label={`Remover ${a.name}`}
+                onClick={() => {
+                  void window.api.attachments.remove(a.id)
                   setAttachNotice(null)
-                }}>
+                }}
+              >
                 ×
               </button>
             </span>
@@ -519,7 +528,7 @@ export default function ChatView({ variant, focusToken = 0 }: Props) {
                     type="button"
                     role="menuitem"
                     onClick={() => {
-                      window.api.attachments.clear()
+                      void window.api.attachments.clear()
                       setAttachNotice(null)
                       setMenuOpen(false)
                     }}

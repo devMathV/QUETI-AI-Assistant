@@ -1,22 +1,35 @@
-// Contrato interno dos provedores de IA. A lógica do assistente conhece apenas
-// esta interface; trocar de provedor significa escrever outro adaptador.
 
-export interface ProviderMessage {
-  role: 'system' | 'user' | 'assistant'
-  content: string
+export interface ToolDefinition {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
 }
+
+export interface ToolCall {
+  id: string
+  name: string
+  arguments: string
+}
+
+export type ProviderMessage =
+  | { role: 'system' | 'user'; content: string }
+  | { role: 'assistant'; content: string | null; toolCalls?: ToolCall[] }
+  | { role: 'tool'; toolCallId: string; content: string }
 
 export interface ChatOptions {
   signal: AbortSignal
   onToken: (text: string) => void
+  tools?: ToolDefinition[]
+}
+
+export interface ChatResult {
+  toolCalls: ToolCall[]
 }
 
 export interface AIProvider {
   readonly id: string
   readonly label: string
-  /** Envia a conversa e entrega a resposta aos poucos (streaming). */
-  chat(messages: ProviderMessage[], options: ChatOptions): Promise<void>
-  /** Lista os modelos disponíveis (também serve para testar a chave). */
+  chat(messages: ProviderMessage[], options: ChatOptions): Promise<ChatResult>
   listModels(): Promise<string[]>
 }
 
@@ -45,7 +58,6 @@ export class ProviderError extends Error {
   }
 }
 
-/** Texto amigável (pt-BR) para mostrar ao usuário. */
 export function userMessage(err: ProviderError): string {
   switch (err.kind) {
     case 'missing_key':

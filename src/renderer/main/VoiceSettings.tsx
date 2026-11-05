@@ -44,7 +44,7 @@ export default function VoiceSettings() {
       return
     }
     setTestError(null)
-    const r = await speak('Olá! Eu sou o seu assistente. Esta é a minha voz.', {
+    const r = await speak('Olá! Eu sou o QUETI, o seu assistente. Esta é a minha voz.', {
       voiceURI: settings!.ttsVoiceURI,
       rate: rate ?? settings!.ttsRate,
       onEnd: () => setSpeaking(false)

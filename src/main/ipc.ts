@@ -5,6 +5,7 @@ import { cancelResponse, getStatus, openSavedConversation, sendUserMessage, star
 import { getCurrentConversationId, getHistory, onChatChanged, onHistoryChanged } from './chat-store'
 import { deleteConversation, listConversations, purgeByRetention } from './history'
 import { isShortcutRegistered, quitApp } from './lifecycle'
+import { addAppGrant, addFolderGrant, addSiteGrant, clearLog, listGrants, listLog, revokeGrant } from './permissions'
 import { addMemory, deleteMemory, listMemories, onMemoryChanged, updateMemory } from './memory'
 import { confirmRetention, dataInfo, deleteEverything, deleteHistory, deleteMemory as deleteAllMemoryData, exportData } from './privacy'
 import { GROQ_SECRET, PROVIDER_LABEL, getProvider } from './providers'
@@ -14,6 +15,7 @@ import { RETENTION_OPTIONS, getSettings, updateSettings } from './settings'
 import { ALLOWED_AUDIO_TYPES, allowLocalMicTest, cancelTranscription, compareModels, describeTranscribeError, ensureVoiceConsent, transcribe } from './voice'
 import { applySettingsPatch } from './widget-control'
 import { TAVILY_KEY_PATTERN, describeSearchError, notifySearchConfig, removeSearchKey, saveSearchKey, searchConfig, searchWeb } from './web-search'
+import { browserBridgeInfo, regenerateBrowserBridgeCode, setBrowserBridgeEnabled } from './browser-bridge'
 import {
   broadcast,
   floatDragEnd,
@@ -37,7 +39,7 @@ import type {
   VoiceBeginResult
 } from '../shared/types'
 
-const PAGES: MainPage[] = ['chat', 'history', 'memory', 'settings', 'privacy', 'diagnostics']
+const PAGES: MainPage[] = ['chat', 'history', 'memory', 'settings', 'permissions', 'privacy', 'diagnostics']
 const KEY_PATTERN = /^gsk_[A-Za-z0-9_-]{10,200}$/
 const MODEL_PATTERN = /^[\w.\-/:]{1,100}$/
 const ID_PATTERN = /^[\w-]{1,64}$/
@@ -239,6 +241,9 @@ export function registerIpc(): void {
     if (typeof p.micAutoGain === 'boolean') safe.micAutoGain = p.micAutoGain
     if (typeof p.autoSearch === 'boolean') safe.autoSearch = p.autoSearch
     if (typeof p.sttUseContext === 'boolean') safe.sttUseContext = p.sttUseContext
+    if (typeof p.toolsEnabled === 'boolean') safe.toolsEnabled = p.toolsEnabled
+    if (p.autonomy === 'explicit' || p.autonomy === 'ask') safe.autonomy = p.autonomy
+    if (typeof p.browserBridge === 'boolean') safe.browserBridge = p.browserBridge
     if (p.bargeIn === 'off' || p.bargeIn === 'headphones' || p.bargeIn === 'speakers') safe.bargeIn = p.bargeIn
     if (p.conversationReplies === 'short' || p.conversationReplies === 'medium' || p.conversationReplies === 'normal') {
       safe.conversationReplies = p.conversationReplies
@@ -251,6 +256,7 @@ export function registerIpc(): void {
       if (await confirmRetention(windowOf(e), p.retentionDays)) safe.retentionDays = p.retentionDays
     }
     const next = applySettingsPatch(safe)
+    if (safe.browserBridge !== undefined) await setBrowserBridgeEnabled(safe.browserBridge)
     if (safe.retentionDays !== undefined && safe.retentionDays > 0) {
       purgeByRetention()
       broadcast('history:changed')
@@ -299,6 +305,42 @@ export function registerIpc(): void {
     allowLocalMicTest()
   })
   ipcMain.on('voice:cancel', (e) => trusted(e) && cancelTranscription())
+
+  ipcMain.handle('permissions:list', (e) => {
+    assertTrusted(e)
+    return listGrants()
+  })
+  ipcMain.handle('permissions:log', (e) => {
+    assertTrusted(e)
+    return listLog(50)
+  })
+  ipcMain.handle('permissions:browserInfo', (e) => {
+    assertTrusted(e)
+    return browserBridgeInfo()
+  })
+  ipcMain.handle('permissions:regenerateBrowserCode', (e) => {
+    assertTrusted(e)
+    return regenerateBrowserBridgeCode()
+  })
+  ipcMain.handle('permissions:addSite', (e, domain: unknown, mode: unknown) => {
+    assertTrusted(e)
+    if (typeof domain !== 'string' || (mode !== 'open' && mode !== 'read')) return { ok: false, message: 'Pedido inválido.' }
+    return addSiteGrant(domain, mode)
+  })
+  ipcMain.handle('permissions:addApp', (e) => {
+    assertTrusted(e)
+    return addAppGrant(windowOf(e))
+  })
+  ipcMain.handle('permissions:addFolder', (e, mode: unknown) => {
+    assertTrusted(e)
+    return addFolderGrant(windowOf(e), mode === 'write')
+  })
+  ipcMain.handle('permissions:revoke', (e, id: unknown) => {
+    assertTrusted(e)
+    if (typeof id !== 'string' || !ID_PATTERN.test(id)) throw new Error('Permissão inválida.')
+    revokeGrant(id)
+  })
+  ipcMain.on('permissions:clearLog', (e) => trusted(e) && clearLog())
 
   ipcMain.handle('search:getConfig', (e) => {
     assertTrusted(e)
@@ -352,10 +394,15 @@ export function registerIpc(): void {
     assertTrusted(e)
     return pickGit(windowOf(e))
   })
-  ipcMain.on('attachments:remove', (e, id: unknown) => {
-    if (trusted(e) && typeof id === 'string' && ID_PATTERN.test(id)) removeAttachment(id)
+  ipcMain.handle('attachments:remove', (e, id: unknown) => {
+    assertTrusted(e)
+    if (typeof id !== 'string' || !ID_PATTERN.test(id)) throw new Error('Anexo inválido.')
+    removeAttachment(id)
   })
-  ipcMain.on('attachments:clear', (e) => trusted(e) && clearAttachments())
+  ipcMain.handle('attachments:clear', (e) => {
+    assertTrusted(e)
+    clearAttachments()
+  })
 
   ipcMain.on('windows:toggleCompact', (e) => trusted(e) && toggleCompact())
   ipcMain.on('windows:hideCompact', (e) => trusted(e) && hideCompact())

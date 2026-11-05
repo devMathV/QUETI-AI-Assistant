@@ -1,6 +1,6 @@
 
 export type Edge = 'left' | 'right'
-export type MainPage = 'chat' | 'history' | 'memory' | 'settings' | 'privacy' | 'diagnostics'
+export type MainPage = 'chat' | 'history' | 'memory' | 'settings' | 'permissions' | 'privacy' | 'diagnostics'
 
 export interface Settings {
   widgetEdge: Edge
@@ -46,6 +46,9 @@ export interface Settings {
 
   autoSearch: boolean
   sttUseContext: boolean
+  toolsEnabled: boolean
+  autonomy: 'explicit' | 'ask'
+  browserBridge: boolean
 }
 
 export interface SendMeta {
@@ -86,11 +89,14 @@ export type SettingsPatch = Partial<
     | 'sttVocabulary'
     | 'autoSearch'
     | 'sttUseContext'
+    | 'toolsEnabled'
+    | 'autonomy'
+    | 'browserBridge'
   >
 >
 
 export type ChatRole = 'user' | 'assistant' | 'notice' | 'error'
-export type ChatAction = 'open-settings' | 'open-memory' | 'browser-search'
+export type ChatAction = 'open-settings' | 'open-memory' | 'browser-search' | 'open-permissions'
 
 export interface Source {
   title: string
@@ -182,6 +188,25 @@ export interface ModelResult {
   ms: number
 }
 export type CompareResult = { ok: true; results: ModelResult[] } | { ok: false; error: string; action?: 'open-settings' }
+
+export type GrantKind = 'site' | 'site_read' | 'app' | 'folder_read' | 'folder_write' | 'browser_read'
+
+export interface Grant {
+  id: string
+  kind: GrantKind
+  target: string
+  label: string
+  createdAt: number
+}
+
+export interface ToolLogEntry {
+  id: number
+  ts: number
+  tool: string
+  target: string
+  outcome: 'done' | 'denied' | 'error'
+  detail: string
+}
 
 export interface AttachmentInfo {
   id: string
@@ -299,12 +324,24 @@ export interface AssistantApi {
     openInBrowser(query: string): void
     onConfigChanged(cb: (config: SearchConfig) => void): () => void
   }
+  permissions: {
+    list(): Promise<Grant[]>
+    log(): Promise<ToolLogEntry[]>
+    addSite(domain: string, mode: 'open' | 'read'): Promise<AttachResult>
+    addApp(): Promise<AttachResult>
+    addFolder(mode: 'read' | 'write'): Promise<AttachResult>
+    revoke(id: string): Promise<void>
+    clearLog(): void
+    onChanged(cb: () => void): () => void
+    browserInfo(): Promise<{ enabled: boolean; port: number | null; connected: boolean; pairingCode: string | null }>
+    regenerateBrowserCode(): Promise<{ pairingCode: string | null }>
+  }
   attachments: {
     list(): Promise<AttachmentInfo[]>
     pickFiles(): Promise<AttachResult>
     pickGit(): Promise<AttachResult>
-    remove(id: string): void
-    clear(): void
+    remove(id: string): Promise<void>
+    clear(): Promise<void>
     onChanged(cb: (list: AttachmentInfo[]) => void): () => void
   }
   clipboard: {

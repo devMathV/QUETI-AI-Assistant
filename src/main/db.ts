@@ -38,7 +38,23 @@ const MIGRATIONS: string[] = [
      updated_at INTEGER NOT NULL
    );`,
   `ALTER TABLE messages ADD COLUMN sources TEXT;`,
-  `ALTER TABLE messages ADD COLUMN attachments TEXT;`
+  `ALTER TABLE messages ADD COLUMN attachments TEXT;`,
+  `CREATE TABLE permissions (
+     id TEXT PRIMARY KEY,
+     kind TEXT NOT NULL,
+     target TEXT NOT NULL,
+     label TEXT NOT NULL,
+     created_at INTEGER NOT NULL,
+     UNIQUE (kind, target)
+   );
+   CREATE TABLE tool_log (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     ts INTEGER NOT NULL,
+     tool TEXT NOT NULL,
+     target TEXT NOT NULL,
+     outcome TEXT NOT NULL,
+     detail TEXT NOT NULL
+   );`
 ]
 
 let db: Db | null = null

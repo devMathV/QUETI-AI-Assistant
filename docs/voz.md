@@ -99,7 +99,7 @@ Em **Configurações → Precisão da transcrição**:
 
 Outras medidas já aplicadas:
 
-- O áudio é gravado com redução de ruído, cancelamento de eco e controle de volume do sistema, em mono e com mais qualidade.
+- O áudio é gravado com redução de ruído, cancelamento de eco e, opcionalmente, controle de volume do sistema, em mono e com mais qualidade. O ganho automático vem desligado por padrão porque pode amplificar ruído baixo; ative-o em Configurações → Voz apenas se o microfone estiver muito baixo.
 - **Sem fala, nada é enviado.** Durante a gravação o app mede o volume no seu computador. Se não houve fala (microfone mudo ou desligado, ou só ruído), ele avisa "Não ouvi nenhuma fala" e **não chama a Groq**. Isso evita o texto inventado que o Whisper produz em silêncio e poupa cota.
 - **Filtro adicional na resposta.** Trechos que a transcrição marca como provável silêncio, fala duvidosa ou repetição são descartados, assim como algumas frases que o Whisper costuma inventar (por exemplo, "Legendas pela comunidade Amara.org").
 - **Aviso de baixa confiança.** Quando a transcrição vem com pouca confiança, o app mostra "Confira o texto antes de enviar" e avisa o assistente.

@@ -4,20 +4,12 @@ import icon from '../../resources/icon.png?asset'
 import { getSettings, updateSettings } from './settings'
 import type { MainPage } from '../shared/types'
 
-// ---------------------------------------------------------------------------
-// Gerenciamento das três janelas:
-//   float   -> botão circular encaixado na borda (sempre visível, minúsculo)
-//   compact -> chat rápido ao lado do botão (criado sob demanda)
-//   main    -> aplicativo central (criado sob demanda, destruído ao fechar)
-// ---------------------------------------------------------------------------
-
 const FLOAT_SIZE = 64
 const COMPACT_W = 400
 const COMPACT_H = 520
-// Distância entre a base da janela compacta e o centro da bolinha (alinha a "setinha").
+
 const COMPACT_TAIL_FROM_BOTTOM = 80
-// Libera a RAM da janela compacta depois de um tempo oculta. A conversa não se perde:
-// ela vive no processo principal.
+
 const COMPACT_IDLE_DESTROY_MS = 5 * 60 * 1000
 
 let floatWin: BrowserWindow | null = null
@@ -35,13 +27,11 @@ const devUrl = !app.isPackaged ? process.env['ELECTRON_RENDERER_URL'] : undefine
 
 const clamp = (v: number, min: number, max: number): number => Math.min(Math.max(v, min), Math.max(min, max))
 
-// --- utilidades -------------------------------------------------------------
-
 function webPreferences(): Electron.WebPreferences {
   return {
     preload: join(__dirname, '../preload/index.js'),
-    contextIsolation: true, // o código da página não enxerga o preload
-    nodeIntegration: false, // a página não tem acesso ao Node
+    contextIsolation: true,
+    nodeIntegration: false,
     sandbox: true,
     spellcheck: false
   }
@@ -51,17 +41,17 @@ function openExternalSafe(url: string): void {
   try {
     if (new URL(url).protocol === 'https:') void shell.openExternal(url)
   } catch {
-    // URL inválida: ignorar.
+
   }
 }
 
 function hardenWindow(win: BrowserWindow): void {
-  // Nenhuma janela nova é aberta por conteúdo da página; links externos só via https no navegador padrão.
+
   win.webContents.setWindowOpenHandler(({ url }) => {
     openExternalSafe(url)
     return { action: 'deny' }
   })
-  // Bloqueia navegação para fora da página atual.
+
   win.webContents.on('will-navigate', (event, url) => {
     if (url !== win.webContents.getURL()) event.preventDefault()
   })
@@ -92,12 +82,9 @@ export function broadcast(channel: string, payload?: unknown): void {
   }
 }
 
-/** Usado pelo IPC: só aceitamos mensagens vindas das nossas próprias janelas. */
 export function isOurWebContents(wc: WebContents): boolean {
   return [floatWin, compactWin, mainWin].some((w) => alive(w) && w.webContents === wc)
 }
-
-// --- geometria ---------------------------------------------------------------
 
 function floatBounds(): Rectangle {
   const s = getSettings()
@@ -131,8 +118,6 @@ export function applyFloatPosition(): void {
   if (alive(compactWin) && compactWin.isVisible()) compactWin.setBounds(compactBounds())
 }
 
-// --- botão flutuante ---------------------------------------------------------
-
 function ensureFloat(): BrowserWindow {
   if (alive(floatWin)) return floatWin
   const win = new BrowserWindow({
@@ -149,7 +134,7 @@ function ensureFloat(): BrowserWindow {
     fullscreenable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    // Não rouba o foco do aplicativo em que você está trabalhando ao clicar na bolinha.
+
     focusable: false,
     webPreferences: webPreferences()
   })
@@ -192,8 +177,6 @@ export function floatDragEnd(): void {
   if (alive(compactWin) && compactWin.isVisible()) compactWin.setBounds(compactBounds())
 }
 
-// --- janela compacta ---------------------------------------------------------
-
 function clearIdleTimer(): void {
   if (idleTimer) clearTimeout(idleTimer)
   idleTimer = null
@@ -226,7 +209,7 @@ function ensureCompact(): BrowserWindow {
   })
   hardenWindow(win)
   trackReady(win)
-  // Clicar fora fecha, a menos que o usuário tenha "fixado" a janela.
+
   win.on('blur', () => {
     if (!compactPinned && !compactAutoHideSuspended && win.isVisible()) {
       lastBlurHideAt = Date.now()
@@ -261,24 +244,20 @@ export function hideCompact(): void {
 
 export function toggleCompact(): void {
   if (alive(compactWin) && compactWin.isVisible()) return hideCompact()
-  // Se a janela acabou de fechar por perder o foco (o clique que a fechou foi
-  // justamente neste botão), não a reabrimos.
+
   if (Date.now() - lastBlurHideAt < 250) return
   showCompact()
 }
 
-/** Evita que o chat rápido feche por perder o foco (ex.: enquanto um diálogo nativo está aberto). */
 export function setCompactAutoHideSuspended(suspended: boolean): void {
   compactAutoHideSuspended = suspended
 }
 
 export function setCompactPinned(pinned: boolean): void {
   compactPinned = pinned
-  // Fixada = sempre por cima, para continuar visível enquanto você usa outro programa.
+
   if (alive(compactWin)) compactWin.setAlwaysOnTop(pinned)
 }
-
-// --- janela principal --------------------------------------------------------
 
 export function openMain(page?: MainPage): void {
   hideCompact()
@@ -295,7 +274,7 @@ export function openMain(page?: MainPage): void {
     minWidth: 720,
     minHeight: 480,
     show: false,
-    title: 'Assistente',
+    title: 'QUETI',
     icon,
     autoHideMenuBar: true,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#1c1c1f' : '#ffffff',
@@ -304,7 +283,7 @@ export function openMain(page?: MainPage): void {
   hardenWindow(win)
   trackReady(win)
   win.once('ready-to-show', () => win.show())
-  // Fechar a janela principal a destrói (libera RAM) e NÃO encerra o aplicativo.
+
   win.on('closed', () => {
     mainWin = null
   })
@@ -312,13 +291,10 @@ export function openMain(page?: MainPage): void {
   mainWin = win
 }
 
-// --- ciclo de vida -----------------------------------------------------------
-
 export function isFloatVisible(): boolean {
   return alive(floatWin) && floatWin.isVisible()
 }
 
-/** Aplica as configurações atuais (visibilidade, lado, posição). */
 export function applySettingsEffects(): void {
   if (getSettings().widgetEnabled) showFloat()
   else hideFloat()

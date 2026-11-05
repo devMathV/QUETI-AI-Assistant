@@ -23,14 +23,17 @@ const DEFAULTS: Settings = {
   ttsVoiceURI: '',
   ttsRate: 1,
   convPauseMs: 1200,
-  micAutoGain: true,
+  micAutoGain: false,
   bargeIn: 'speakers',
   conversationReplies: 'short',
   sttModel: 'whisper-large-v3',
   sttVocabulary: '',
   searchUsage: { month: '', count: 0 },
   autoSearch: true,
-  sttUseContext: true
+  sttUseContext: true,
+  toolsEnabled: false,
+  autonomy: 'explicit'
+  ,browserBridge: false
 }
 
 let cache: Settings | null = null
@@ -74,7 +77,10 @@ function sanitize(raw: unknown): Settings {
     sttVocabulary: typeof r.sttVocabulary === 'string' ? r.sttVocabulary.replace(/[\x00-\x1f]+/g, ' ').trim().slice(0, 400) : '',
     searchUsage: sanitizeUsage(r.searchUsage),
     autoSearch: bool(r.autoSearch, DEFAULTS.autoSearch),
-    sttUseContext: bool(r.sttUseContext, DEFAULTS.sttUseContext)
+    sttUseContext: bool(r.sttUseContext, DEFAULTS.sttUseContext),
+    toolsEnabled: bool(r.toolsEnabled, DEFAULTS.toolsEnabled),
+    autonomy: r.autonomy === 'ask' ? 'ask' : 'explicit'
+    ,browserBridge: bool(r.browserBridge, DEFAULTS.browserBridge)
   }
 }
 

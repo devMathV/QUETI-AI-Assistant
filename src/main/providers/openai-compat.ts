@@ -1,8 +1,12 @@
 import { createGuard, fetchChecked, mapAbortOrNetwork, type Guard } from './http'
-import { ProviderError, type AIProvider, type ChatOptions, type ProviderMessage } from './types'
-
-// Adaptador para qualquer API no formato "OpenAI-compatível" (Groq, OpenRouter, Ollama...).
-// Lê o streaming SSE à mão: assim não precisamos de nenhuma biblioteca extra.
+import {
+  ProviderError,
+  type AIProvider,
+  type ChatOptions,
+  type ChatResult,
+  type ProviderMessage,
+  type ToolCall
+} from './types'
 
 const FIRST_BYTE_TIMEOUT_MS = 30_000
 const STALL_TIMEOUT_MS = 30_000
@@ -15,6 +19,24 @@ export interface OpenAICompatConfig {
   apiKey: string | null
   model: string
   maxTokens: number
+}
+
+interface PartialCall {
+  id: string
+  name: string
+  args: string
+}
+
+function toWire(m: ProviderMessage): Record<string, unknown> {
+  if (m.role === 'tool') return { role: 'tool', tool_call_id: m.toolCallId, content: m.content }
+  if (m.role === 'assistant' && m.toolCalls && m.toolCalls.length > 0) {
+    return {
+      role: 'assistant',
+      content: m.content,
+      tool_calls: m.toolCalls.map((c) => ({ id: c.id, type: 'function', function: { name: c.name, arguments: c.arguments } }))
+    }
+  }
+  return { role: m.role, content: m.content }
 }
 
 export class OpenAICompatProvider implements AIProvider {
@@ -33,33 +55,49 @@ export class OpenAICompatProvider implements AIProvider {
     return this.cfg.apiKey
   }
 
-  async chat(messages: ProviderMessage[], options: ChatOptions): Promise<void> {
+  async chat(messages: ProviderMessage[], options: ChatOptions): Promise<ChatResult> {
     const key = this.key()
     const guard = createGuard(options.signal, FIRST_BYTE_TIMEOUT_MS)
     try {
+      const body: Record<string, unknown> = {
+        model: this.cfg.model,
+        messages: messages.map(toWire),
+        stream: true,
+        max_tokens: this.cfg.maxTokens
+      }
+      if (options.tools && options.tools.length > 0) {
+        body.tools = options.tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } }))
+        body.tool_choice = 'auto'
+      }
       const res = await fetchChecked(
         `${this.cfg.baseUrl}/chat/completions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-          body: JSON.stringify({
-            model: this.cfg.model,
-            messages,
-            stream: true,
-            max_tokens: this.cfg.maxTokens
-          })
+          body: JSON.stringify(body)
         },
         guard
       )
       if (!res.body) throw new ProviderError('empty', 'sem corpo')
       guard.reset(STALL_TIMEOUT_MS)
-      await this.readStream(res.body, guard, options.onToken)
+      const calls = new Map<number, PartialCall>()
+      await this.readStream(res.body, guard, options.onToken, calls)
+      const toolCalls: ToolCall[] = [...calls.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .filter(([, c]) => c.name)
+        .map(([i, c]) => ({ id: c.id || `call_${i}`, name: c.name, arguments: c.args || '{}' }))
+      return { toolCalls }
     } finally {
       guard.dispose()
     }
   }
 
-  private async readStream(body: ReadableStream<Uint8Array>, guard: Guard, onToken: (t: string) => void): Promise<void> {
+  private async readStream(
+    body: ReadableStream<Uint8Array>,
+    guard: Guard,
+    onToken: (t: string) => void,
+    calls: Map<number, PartialCall>
+  ): Promise<void> {
     const reader = body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -81,7 +119,7 @@ export class OpenAICompatProvider implements AIProvider {
           if (!line.startsWith('data:')) continue
           const data = line.slice(5).trim()
           if (data === '[DONE]') return
-          this.handleEvent(data, onToken)
+          this.handleEvent(data, onToken, calls)
         }
       }
     } finally {
@@ -89,19 +127,35 @@ export class OpenAICompatProvider implements AIProvider {
     }
   }
 
-  private handleEvent(data: string, onToken: (t: string) => void): void {
-    let json: { error?: { message?: unknown }; choices?: { delta?: { content?: unknown } }[] }
+  private handleEvent(data: string, onToken: (t: string) => void, calls: Map<number, PartialCall>): void {
+    let json: {
+      error?: { message?: unknown }
+      choices?: {
+        delta?: {
+          content?: unknown
+          tool_calls?: { index?: number; id?: string; function?: { name?: string; arguments?: string } }[]
+        }
+      }[]
+    }
     try {
       json = JSON.parse(data)
     } catch {
-      return // linha incompleta ou irrelevante
+      return
     }
     if (json.error) {
       const message = typeof json.error.message === 'string' ? json.error.message.slice(0, 300) : 'erro no streaming'
       throw new ProviderError('bad_request', message)
     }
-    const delta = json.choices?.[0]?.delta?.content
-    if (typeof delta === 'string' && delta.length > 0) onToken(delta)
+    const delta = json.choices?.[0]?.delta
+    if (typeof delta?.content === 'string' && delta.content.length > 0) onToken(delta.content)
+    for (const tc of delta?.tool_calls ?? []) {
+      const index = typeof tc.index === 'number' ? tc.index : 0
+      const entry = calls.get(index) ?? { id: '', name: '', args: '' }
+      if (tc.id) entry.id = tc.id
+      if (tc.function?.name) entry.name = tc.function.name
+      if (typeof tc.function?.arguments === 'string') entry.args += tc.function.arguments
+      calls.set(index, entry)
+    }
   }
 
   async listModels(): Promise<string[]> {

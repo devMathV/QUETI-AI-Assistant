@@ -59,7 +59,7 @@ async function openDialog(win: BrowserWindow | null, options: Electron.OpenDialo
   }
 }
 
-const isTextFile = (path: string): boolean => {
+export const isTextFile = (path: string): boolean => {
   const ext = extname(path).slice(1).toLowerCase()
   return TEXT_EXTENSIONS.includes(ext) || (ext === '' && TEXT_NAMES.includes(basename(path).toLowerCase())) || TEXT_EXTENSIONS.includes(basename(path).toLowerCase().replace(/^\./, ''))
 }

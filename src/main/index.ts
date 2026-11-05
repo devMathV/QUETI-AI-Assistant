@@ -8,6 +8,7 @@ import { registerShortcut, unregisterShortcuts } from './lifecycle'
 import { getSettings } from './settings'
 import { createTray } from './tray'
 import { isMicrophoneAllowed } from './voice'
+import { initBrowserBridge, stopBrowserBridge } from './browser-bridge'
 import { initWindows, isOurWebContents, openMain, showFloat } from './windows'
 
 // Para testar instalações separadas (ou manter um perfil de desenvolvimento
@@ -54,6 +55,7 @@ if (!app.requestSingleInstanceLock()) {
     initWindows()
     createTray()
     registerShortcut()
+    initBrowserBridge()
     if (getSettings().widgetEnabled) showFloat()
   })
 
@@ -62,6 +64,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('window-all-closed', () => {})
 
   app.on('will-quit', () => {
+    stopBrowserBridge()
     unregisterShortcuts()
     closeDb()
   })

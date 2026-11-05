@@ -1,0 +1,24 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f5f7fb;
+  color: #172033;
+}
+
+body { margin: 0; min-width: 320px; }
+.card { padding: 20px; }
+.brand { display: flex; align-items: center; gap: 11px; margin-bottom: 16px; }
+.brand__mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; background: #315efb; color: white; font-size: 21px; font-weight: 800; }
+h1 { margin: 0; font-size: 18px; letter-spacing: .04em; }
+.brand p, .intro { margin: 3px 0 0; color: #667085; font-size: 12px; }
+.intro { margin-bottom: 18px; line-height: 1.45; }
+label { display: block; margin-bottom: 6px; color: #344054; font-size: 12px; font-weight: 600; }
+input { box-sizing: border-box; width: 100%; padding: 10px 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: 12px ui-monospace, monospace; }
+input:focus { outline: 2px solid #b8c7ff; border-color: #315efb; }
+.actions { display: grid; grid-template-columns: 1fr 90px; gap: 8px; }
+button { width: 100%; margin-top: 11px; padding: 10px; border: 0; border-radius: 8px; background: #315efb; color: white; font-weight: 700; cursor: pointer; }
+button:hover { background: #244bd3; }
+.button--secondary { background: #e8ecf5; color: #344054; }
+.status { min-height: 18px; margin: 12px 0 0; color: #667085; font-size: 12px; line-height: 1.4; }
+.status--ok { color: #087443; }
+.status--error { color: #b42318; }

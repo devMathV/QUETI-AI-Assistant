@@ -4,6 +4,7 @@ import ChatView from '../shared/ChatView'
 import Diagnostics from './Diagnostics'
 import History from './History'
 import Memory from './Memory'
+import Permissions from './Permissions'
 import Privacy from './Privacy'
 import Settings from './Settings'
 
@@ -12,6 +13,7 @@ const NAV: { id: MainPage; label: string }[] = [
   { id: 'history', label: 'Histórico' },
   { id: 'memory', label: 'Memória' },
   { id: 'settings', label: 'Configurações' },
+  { id: 'permissions', label: 'Permissões' },
   { id: 'privacy', label: 'Privacidade e dados' },
   { id: 'diagnostics', label: 'Diagnóstico' }
 ]
@@ -24,13 +26,12 @@ export default function App() {
     return isPage(h) ? h : 'chat'
   })
 
-  // O processo principal pode pedir para trocar de página (ex.: "Configurações" na bandeja).
   useEffect(() => window.api.windows.onNavigate(setPage), [])
 
   return (
     <div className="app">
       <nav className="sidebar" aria-label="Seções">
-        <h1 className="sidebar__title">Assistente</h1>
+        <h1 className="sidebar__title">QUETI</h1>
         <ul>
           {NAV.map((n) => (
             <li key={n.id}>
@@ -46,7 +47,7 @@ export default function App() {
           ))}
         </ul>
         <button type="button" className="quit-btn" onClick={() => window.api.windows.quit()}>
-          Encerrar o assistente
+          Encerrar o QUETI
         </button>
       </nav>
 
@@ -65,6 +66,7 @@ export default function App() {
         {page === 'history' && <History onOpened={() => setPage('chat')} />}
         {page === 'memory' && <Memory />}
         {page === 'settings' && <Settings />}
+        {page === 'permissions' && <Permissions />}
         {page === 'privacy' && <Privacy />}
         {page === 'diagnostics' && <Diagnostics />}
       </main>
